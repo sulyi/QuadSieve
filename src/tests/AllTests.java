@@ -1,17 +1,16 @@
 package tests;
 
-import org.junit.Test;
+import com.CLIEngine;
+import com.utils.EratoSieve;
+import com.utils.IntMath;
 import org.junit.Assert;
-import static org.hamcrest.CoreMatchers.*;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.logging.Logger;
-//TODO: also delete this
-//import java.util.Iterator;
 
-import utils.EratoSieve;
-import utils.IntMath;
-import utils.QuadSieve;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
 
 
 /**
@@ -240,12 +239,8 @@ public class AllTests {
 
         EratoSieve.clear();
 
-        try {
-            new QuadSieve(7429).sift(8,3,2);
-            new QuadSieve(87463).sift(30,30,2);
-        } catch (InterruptedException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
+        CLIEngine.solve(7429,8,3);
+        CLIEngine.solve(87463,30,30);
 
     }
 

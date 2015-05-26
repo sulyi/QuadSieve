@@ -1,4 +1,4 @@
-package utils;
+package com.utils;
 
 import java.util.BitSet;
 import java.util.Vector;
@@ -28,9 +28,12 @@ public class QuadSieve {
         this.factorBase = new Vector<Integer>();
     }
 
-    public void sift(int bound, int length, int threads) throws InterruptedException {
+    public BitMatrix sift(int bound, int length) throws InterruptedException {
+        return sift(bound, length, Runtime.getRuntime().availableProcessors());
+    }
+
+    public BitMatrix sift(int bound, int length, int threads) throws InterruptedException {
         // TODO: implement possibility of continued sieving
-        int i;
 
         this.from = root - length;
         this.to = root + length;
@@ -40,13 +43,13 @@ public class QuadSieve {
         ExecutorService pool = Executors.newFixedThreadPool(threads);
 
         Vector<Future<BitSet>> futureExponentMatrix = new Vector<Future<BitSet>>();
-        BitMatrix exponentMatrix = new BitMatrix();
+        BitMatrix exponentMatrix = new BitMatrix(this.length);
         BitSet sign = new BitSet(this.length);
 
         EratoSieve.clear();
         EratoSieve.strain(bound);
 
-        for(i=from;i<=to;i++){
+        for(int i=from;i<=to;i++){
             this.sievingInterval.add(i * i - n);
             if (i<root) sign.set(i-from);
         }
@@ -61,7 +64,6 @@ public class QuadSieve {
             }
         }
 
-        //TODO: create bitmatrix
         for( Future<BitSet> column : futureExponentMatrix ){
             try {
                 exponentMatrix.add(column.get());
@@ -73,24 +75,23 @@ public class QuadSieve {
 
         pool.shutdown();
 
-        for(Integer p : factorBase){
-            System.out.print(p+" ");
-        }
-        System.out.println();
+        return exponentMatrix;
+    }
 
-        for(i=0;i<this.length;i++){
-            System.out.print(from+i+" ");
-            for( BitSet column : exponentMatrix ){
-                System.out.print( ((column .get(i)) ? 1 : 0)+" " );
-            }
-            System.out.println();
-        }
+    public int getFrom() {
+        return from;
+    }
 
-        exponentMatrix.transpose();
-        exponentMatrix.gaussElimination();
-        
-        //TODO: Gauss elimination
-        //TODO: calculate final result
+    public int getTo() {
+        return to;
+    }
+
+    public int getLength() {
+        return length;
+    }
+
+    public int getRoot() {
+        return root;
     }
 
     private class Sifter implements Callable<BitSet> {

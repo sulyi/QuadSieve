@@ -1,4 +1,4 @@
-package utils;
+package com.utils;
 
 /**
  * Created by IntelliJ IDEA.
