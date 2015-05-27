@@ -19,7 +19,7 @@ public class QuadSieve {
 
     private int root;
 
-    private Vector<Long> sievingInterval;
+    private Vector<Integer> sievingInterval;
     private int from, to, length;
 
     public QuadSieve(long n) {
@@ -38,19 +38,25 @@ public class QuadSieve {
         this.from = root - length;
         this.to = root + length;
         this.length = 2*length+1;
-        this.sievingInterval = new Vector<Long>(this.length);
+        this.sievingInterval = new Vector<Integer>(this.length);
 
         ExecutorService pool = Executors.newFixedThreadPool(threads);
 
         Vector<Future<BitSet>> futureExponentMatrix = new Vector<Future<BitSet>>();
         BitMatrix exponentMatrix = new BitMatrix(this.length);
         BitSet sign = new BitSet(this.length);
+        long l;
 
         EratoSieve.clear();
         EratoSieve.strain(bound);
 
         for(int i=from;i<=to;i++){
-            this.sievingInterval.add(i * i - n);
+            l = i * i -n;
+            if (l > Integer.MIN_VALUE || l < Integer.MAX_VALUE)
+                this.sievingInterval.add((int)(i * i - n));
+            else
+                throw new IllegalArgumentException
+                    (l + " cannot be cast to int without changing its value.");
             if (i<root) sign.set(i-from);
         }
 
@@ -78,6 +84,32 @@ public class QuadSieve {
         return exponentMatrix;
     }
 
+    public Solution getFactors(BitSet solution){
+        int i;
+        int x = 1, y;
+        long yp = 1;
+        int f1,f2;
+        Solution factors = new Solution();
+        for(i=0;i<this.length;i++){
+            if (solution.get(i)){
+                x *= (from + i);
+                yp *= sievingInterval.get(i);
+            }
+        }
+        x %= n;
+        y = (int) (Math.sqrt((double) yp) % n);
+        if (x > y){
+            factors.x = x;
+            factors.y = y;
+        } else {
+            factors.x = y;
+            factors.y = x;
+        }
+        factors.f1 = factors.x + factors.y;
+        factors.f2 = factors.x - factors.y;
+        return factors;
+    }
+
     public int getFrom() {
         return from;
     }
@@ -92,6 +124,14 @@ public class QuadSieve {
 
     public int getRoot() {
         return root;
+    }
+
+    public Vector<Integer> getInterval(){
+        return sievingInterval;
+    }
+
+    public class Solution{
+        public int x,y,f1,f2;
     }
 
     private class Sifter implements Callable<BitSet> {
