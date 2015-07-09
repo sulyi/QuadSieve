@@ -1,8 +1,9 @@
 package com.utils;
 
+import com.binalg.BitMatrix;
+
 import java.util.BitSet;
 import java.util.Vector;
-import java.lang.Math;
 import java.util.concurrent.*;
 
 /**
@@ -14,6 +15,7 @@ import java.util.concurrent.*;
  */
 
 public class QuadSieve {
+    // TODO: these should be also private with getters
     public long n;
     public Vector<Integer> factorBase;
 
@@ -47,23 +49,23 @@ public class QuadSieve {
         BitSet sign = new BitSet(this.length);
         long l;
 
-        EratoSieve.clear();
-        EratoSieve.strain(bound);
+        //EratoSieve.clear();
+        EratoSieve.sift(bound);
 
         for(int i=from;i<=to;i++){
             l = i * i -n;
             if (l > Integer.MIN_VALUE || l < Integer.MAX_VALUE)
-                this.sievingInterval.add((int)(i * i - n));
+                this.sievingInterval.add((int) l);
             else
                 throw new IllegalArgumentException
                     (l + " cannot be cast to int without changing its value.");
-            if (i<root) sign.set(i-from);
+            if (l<0) sign.set(i-from);
         }
 
         exponentMatrix.add(sign);
 
         factorBase.add(-1);
-        for (Integer p : EratoSieve.primes) {
+        for (Integer p : EratoSieve.getPrimes()) {
             if (IntMath.legendre(n, p) == 1) {
                 factorBase.add(p);
                 futureExponentMatrix.add( pool.submit(new Sifter(p)) );
@@ -86,18 +88,22 @@ public class QuadSieve {
 
     public Solution getFactors(BitSet solution){
         int i;
-        int x = 1, y;
-        long yp = 1;
-        int f1,f2;
+        long x = 1, y;
+        double yp = 1;
+        long gcd1, gcd2;
+
         Solution factors = new Solution();
+
         for(i=0;i<this.length;i++){
             if (solution.get(i)){
                 x *= (from + i);
-                yp *= sievingInterval.get(i);
+                x %= n;
+                // FIXME: OVERFLOW !
+                yp *= Math.sqrt((double) Math.abs(sievingInterval.get(i)));
             }
         }
-        x %= n;
-        y = (int) (Math.sqrt((double) yp) % n);
+        y = (long) yp % n;
+
         if (x > y){
             factors.x = x;
             factors.y = y;
@@ -105,8 +111,9 @@ public class QuadSieve {
             factors.x = y;
             factors.y = x;
         }
-        factors.f1 = factors.x + factors.y;
-        factors.f2 = factors.x - factors.y;
+
+        factors.f1 = factors.x+factors.y;
+        factors.f2 = factors.x-factors.y;
         return factors;
     }
 
@@ -131,7 +138,7 @@ public class QuadSieve {
     }
 
     public class Solution{
-        public int x,y,f1,f2;
+        public long x,y,f1,f2;
     }
 
     private class Sifter implements Callable<BitSet> {

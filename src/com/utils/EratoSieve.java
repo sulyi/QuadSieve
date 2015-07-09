@@ -13,36 +13,22 @@ import java.util.concurrent.*;
  */
 
 public class EratoSieve {              
-    public final static Vector<Integer> primes = new Vector<Integer>();
+    protected static Vector<Integer> primes = new Vector<Integer>();
 
-    private static BitSet sieve = new BitSet();
-    private static int from;
-    
-    private static Semaphore waitHere;
-    private static BlockingQueue<Strain> strains;
-    private static ExecutorService pool;
+    protected static BitSet sieve = new BitSet();
+    protected static int from;
 
-    public static void strain(int bound) throws InterruptedException {
-        //TODO: uncomment and delete after fixing sift
-        //sift(bound, Runtime.getRuntime().availableProcessors());
-        sift(bound, 1);
+
+    public static void sift(int bound) throws InterruptedException {
+        sift(bound, Runtime.getRuntime().availableProcessors());
     }
 
     public static void sift(int bound, int threads) throws InterruptedException {
-        //TODO: no negative bound
-        //FIXME: bug somewhere in continued sieving
+        // TODO: no negative bound
+
         int i;
         int p = 2;
         int range;
-        int f,m;
-
-        pool = Executors.newFixedThreadPool(threads);
-        strains = new ArrayBlockingQueue<Strain>(threads);
-        waitHere = new Semaphore(0);
-
-        for(i=0; i<threads; i++){
-            pool.submit(new Sifter());
-        }
 
         if (sieve.isEmpty()){
             sieve.clear(0);
@@ -50,42 +36,52 @@ public class EratoSieve {
             from = 2;
             range = bound / threads;
         } else {
-            // BitSet initialized with length of registers
             range = (bound - from) / threads;
         }
 
         for(i=from;i<bound;i++) sieve.set(i);
 
-        //TODO: complete overhaul of parallelization
+        if (threads > 1){
+            threads--;
 
-        while (p*p <= bound){
+            int f,rm,m;
+            Semaphore waitForIt = new Semaphore(0);
 
-            for(i=threads; i>0; i--){
-                f = (i-1)*range;
-                if ( f < p*p ) f = p*p;
-                else{
-                    // Chopping overhead !!!
-                    m = f % p;
-                    if( m != 0){
-                        f += p;
-                        f -= m;
-                    }
-                    //f += (p - f % p) % p;
-                    //while(f % p != 0) f++;
+            ExecutorService  pool = Executors.newFixedThreadPool(threads);
+            Sifter[] sifters = new Sifter[threads];
+
+            for(i=0; i<threads; i++){
+                sifters[i] = new Sifter(waitForIt);
+                pool.submit(sifters[i]);
+            }
+
+            while (p*p <= bound){
+                for(i=p*p;i<range;i+=p) sieve.clear(i);
+                f = i;
+                m = rm = i - range;
+                for(i=1; i<threads; f = i * range + m,i++){
+                    sifters[i-1].strains.put(new Strain(p,f,i*range));
+                    // Chopping overhead
+                    m += rm;
+                    m %= p;
                 }
-                strains.put(new Strain(p,f,i*range));
+                sifters[i-1].strains.put(new Strain(p,f,bound));
+
+                p = sieve.nextSetBit(p+1);
 
             }
 
-            waitHere.acquire(threads);
+            for (i = 0; i < threads; i++) sifters[i].strains.put(new Strain(0,0,0));
 
-            p = sieve.nextSetBit(p+1);
+            waitForIt.acquire(threads);
+            pool.shutdown();
 
+        } else {
+            while (p*p <= bound){
+                for(i=p*p;i<bound;i+=p) sieve.clear(i);
+                p = sieve.nextSetBit(p+1);
+            }
         }
-
-        for (i = 0; i < threads; i++) strains.put(new Strain(0,0,0));
-
-        pool.shutdown();
 
         for (i=from;i<bound;i++)
             if(sieve.get(i)) primes.add(i);
@@ -98,8 +94,12 @@ public class EratoSieve {
     }
 
     public static boolean isPrime(int N) throws InterruptedException {
-        if(N > from) strain(N);
+        if(N > from) sift(N);
         return sieve.get(N);
+    }
+
+    public static Vector<Integer> getPrimes(){
+        return primes;
     }
 
     public static void clear(){
@@ -119,17 +119,24 @@ public class EratoSieve {
     }
 
     private static class Sifter implements Runnable{
+        private BlockingQueue<Strain> strains  = new LinkedBlockingQueue<Strain>();
+        private Semaphore latch;
+
+
+        public Sifter(Semaphore latch){
+            this.latch = latch;
+        }
+
         public void run(){
             Strain job;
             try {
                 while(true){
-
                         job = strains.take();
                         if (job.step == 0) break;
                         for( int i=job.from;i<job.to;i+=job.step) sieve.clear(i);
-                        waitHere.release();
                 }
             } catch (InterruptedException ignored) {}
+            latch.release();
         }
 
     }

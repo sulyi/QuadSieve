@@ -1,12 +1,15 @@
 package tests;
 
 import com.CLIEngine;
+import com.binalg.BitMatrix;
+import com.binalg.SimpleBitMatrix;
 import com.utils.EratoSieve;
 import com.utils.IntMath;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.logging.Logger;
 
 import static org.hamcrest.CoreMatchers.anyOf;
@@ -80,14 +83,14 @@ public class AllTests {
     int[] legendre_n = {1, 3, 5, 7, /*9,*/ 11, 13, /*15,*/ 17};
 
     int[][] legendre = { /*1 */ {1},
-                         /*3 */ {0, 1, -1},
-                         /*5 */ {0, 1, -1, -1,  1},
-                         /*7 */ {0, 1,  1,	-1,  1, -1, -1},
-   // this isn't a prime /*9 */ {0, 1,  1,  0,  1,  1,  0,  1,  1},
-                         /*11*/ {0, 1, -1,  1,  1,  1, -1, -1, -1,  1, -1},
-                         /*13*/ {0, 1, -1,  1,  1, -1, -1, -1, -1,  1,  1, -1,  1},
-   // nor is this        /*15*/ {0, 1,  1,  0,  1,  0,  0, -1,  1,  0,  0, -1,  0, -1, -1},
-                         /*17*/ {0, 1,  1, -1,  1, -1, -1, -1,  1,  1, -1, -1, -1,  1, -1,  1,  1}
+            /*3 */ {0, 1, -1},
+            /*5 */ {0, 1, -1, -1, 1},
+            /*7 */ {0, 1, 1, -1, 1, -1, -1},
+            // this isn't a prime /*9 */ {0, 1,  1,  0,  1,  1,  0,  1,  1},
+            /*11*/ {0, 1, -1, 1, 1, 1, -1, -1, -1, 1, -1},
+            /*13*/ {0, 1, -1, 1, 1, -1, -1, -1, -1, 1, 1, -1, 1},
+            // nor is this        /*15*/ {0, 1,  1,  0,  1,  0,  0, -1,  1,  0,  0, -1,  0, -1, -1},
+            /*17*/ {0, 1, 1, -1, 1, -1, -1, -1, 1, 1, -1, -1, -1, 1, -1, 1, 1}
     };
 
     Logger log = Logger.getLogger("tests.AllTests");
@@ -95,19 +98,19 @@ public class AllTests {
 
     @Test
     public void EratoSieveTest() {
-        log.info("EratoSieve test");
+        log.info("started");
 
         EratoSieve.clear();
-        
+
         try {
-            EratoSieve.strain(3580);
+            EratoSieve.sift(3580);
         } catch (InterruptedException e) {
             log.info("Test has been interrupted");
         }
 
         Assert.assertArrayEquals("There's been a fault in the first 500 prime",
                 primes,
-                EratoSieve.primes.toArray()
+                EratoSieve.getPrimes().toArray()
         );
 
     }
@@ -116,14 +119,14 @@ public class AllTests {
     public void EratoSieveChopTest() {
         //Iterator it;
 
-        log.info("EratoSieve chop test");
+        log.info("started");
 
         EratoSieve.clear();
 
         int j = 0;
         for (int i = 716; i <= 3580; i += 716) {
             try {
-                EratoSieve.strain(i);
+                EratoSieve.sift(i);
             } catch (InterruptedException e) {
                 log.info("Test has been interrupted");
             }
@@ -131,27 +134,21 @@ public class AllTests {
 
                 Assert.assertArrayEquals(String.format("There's been a fault in primes less than %d", i),
                         Arrays.copyOfRange(primes, 0, j),
-                        EratoSieve.primes.toArray()
+                        EratoSieve.getPrimes().toArray()
                 );
 
-            //TODO: delete this when ever you're ready
-            //for(Integer prime : EratoSieve.primes) System.out.print(prime+" ");
-
-            //it =  EratoSieve.primes.iterator();
-            //while(it.hasNext()) System.out.printf("%d, ",it.next());
-            //System.out.println();
         }
 
     }
 
-    //@Test
+    @Test
     public void EratoSieveSpeedTest() {
-        log.info("EratoSieve speed test");
+        log.info("started");
 
         EratoSieve.clear();
         long single = System.nanoTime();
         try {
-            EratoSieve.sift(35800,1);
+            EratoSieve.sift(35800, 1);
         } catch (InterruptedException e) {
             log.info("Test has been interrupted");
         }
@@ -160,7 +157,7 @@ public class AllTests {
         EratoSieve.clear();
         long all = System.nanoTime();
         try {
-            EratoSieve.strain(35800);
+            EratoSieve.sift(35800);
         } catch (InterruptedException e) {
             log.info("Test has been interrupted");
         }
@@ -169,78 +166,135 @@ public class AllTests {
         EratoSieve.clear();
         long five = System.nanoTime();
         try {
-            EratoSieve.sift(35800,5);
+            EratoSieve.sift(35800, 5);
         } catch (InterruptedException e) {
             log.info("Test has been interrupted");
         }
         five = System.nanoTime() - five;
 
-        log.info(String.format("Single thread took:  %d ms",single));
-        log.info(String.format("All processors took: %d ms",all));
-        log.info(String.format("Five threads took:   %d ms",five));
+        log.info(String.format("Single thread took:  %d ms", single));
+        log.info(String.format("All processors took: %d ms", all));
+        log.info(String.format("Five threads took:   %d ms", five));
 
-        Assert.assertTrue("Parallel processing is slower",single > all);
+        //Assert.assertTrue("Parallel processing is slower",single > all);
 
     }
 
     @Test
-    public void LegendreTest(){
-        log.info("Legendre test");
+    public void LegendreTest() {
+        log.info("started");
 
-        for(int i=0; i<legendre.length;i++){
-           for(int j=0;j<legendre[i].length;j++){
-                Assert.assertEquals("Faulty IntMath legendre: ("+j+"/"+legendre_n[i]+")",
-                                    legendre[i][j],
-                                    IntMath.legendre(j,legendre_n[i])
-               );
+        for (int i = 0; i < legendre.length; i++) {
+            for (int j = 0; j < legendre[i].length; j++) {
+                Assert.assertEquals("Faulty IntMath legendre: (" + j + "/" + legendre_n[i] + ")",
+                        legendre[i][j],
+                        IntMath.legendre(j, legendre_n[i])
+                );
             }
         }
     }
 
     @Test
-    public void TonelliShanksTest(){
-        log.info("Tonelli-Shanks test");
+    public void TonelliShanksTest() {
+        log.info("started");
 
         Assert.assertEquals("x^2 ≡ 87463 (mod 2)",
-                            1,
-                            IntMath.tonelliShanks(87463, 2)
+                IntMath.tonelliShanks(87463, 2),
+                1
         );
 
         Assert.assertThat("x^2 ≡ 87463 (mod 3)",
-                          IntMath.tonelliShanks(87463, 3),
-                          anyOf(equalTo(1),equalTo(2))
+                IntMath.tonelliShanks(87463, 3),
+                anyOf(equalTo(1), equalTo(2))
         );
 
         Assert.assertThat("x^2 ≡ 87463 (mod 13)",
-                          IntMath.tonelliShanks(87463, 13),
-                          anyOf(equalTo(5),equalTo(8))
+                IntMath.tonelliShanks(87463, 13),
+                anyOf(equalTo(5), equalTo(8))
         );
-        
+
         Assert.assertThat("x^2 ≡ 87463 (mod 17)",
-                          IntMath.tonelliShanks(87463, 17),
-                          anyOf(equalTo(7),equalTo(10))
+                IntMath.tonelliShanks(87463, 17),
+                anyOf(equalTo(7), equalTo(10))
         );
 
         Assert.assertThat("x^2 ≡ 87463 (mod 19)",
-                          IntMath.tonelliShanks(87463, 19),
-                          anyOf(equalTo(5),equalTo(14))
+                IntMath.tonelliShanks(87463, 19),
+                anyOf(equalTo(5), equalTo(14))
         );
 
         Assert.assertThat("x^2 ≡ 87463 (mod 29)",
-                          IntMath.tonelliShanks(87463, 29),
-                          anyOf(equalTo(12),equalTo(17))
+                IntMath.tonelliShanks(87463, 29),
+                anyOf(equalTo(12), equalTo(17))
         );
-        
+
     }
 
     @Test
-    public void QuadSieve(){
-        log.info("QuadSieve test");
+    public void NullSpaceTest() {
+        log.info("started");
+        BitMatrix A = new BitMatrix(6);
+        SimpleBitMatrix N;
+        BitSet r;
+
+        r = new BitSet(6);
+        r.set(0, 2);
+        A.add(r);
+
+        r = new BitSet(6);
+        r.set(0);
+        r.set(3, 5);
+        A.add(r);
+
+        r = new BitSet(6);
+        r.set(0, 2);
+        r.set(3);
+        A.add(r);
+
+        r = new BitSet(6);
+        r.set(1);
+        r.set(4);
+        A.add(r);
+
+        r = new BitSet(6);
+        r.set(0);
+        r.set(2, 4);
+        r.set(5);
+        A.add(r);
+
+        r = new BitSet(6);
+        r.set(3);
+        A.add(r);
+
+        r = new BitSet(6);
+        r.set(1);
+        r.set(4);
+        A.add(r);
+
+        for (BitSet row : A) {
+            for (int i = 0, y = A.getNumCols(); i < y; i++)
+                System.out.print(((row.get(i)) ? 1 : 0) + "\t");
+            System.out.println();
+        }
+        System.out.println();
+
+        N = A.nullSpace();
+        for (BitSet row : N) {
+            for (int i = 0, y = N.getNumCols(); i < y; i++)
+                System.out.print(((row.get(i)) ? 1 : 0) + "\t");
+            System.out.println();
+        }
+
+    }
+
+    @Test
+    public void QuadSieveTest() {
+        log.info("started");
 
         EratoSieve.clear();
 
-        CLIEngine.solve(7429,8,3);
-        //CLIEngine.solve(87463,30,30);
+        CLIEngine.solve(7429, 8, 3);
+        CLIEngine.solve(87463,30,30);
 
     }
 
