@@ -82,7 +82,8 @@ public class AllTests {
 
     int[] legendre_n = {1, 3, 5, 7, /*9,*/ 11, 13, /*15,*/ 17};
 
-    int[][] legendre = { /*1 */ {1},
+    int[][] legendre = {
+            /*1 */ {1},
             /*3 */ {0, 1, -1},
             /*5 */ {0, 1, -1, -1, 1},
             /*7 */ {0, 1, 1, -1, 1, -1, -1},
@@ -180,7 +181,7 @@ public class AllTests {
 
     }
 
-    @Test
+    //@Test
     public void LegendreTest() {
         log.info("started");
 
@@ -295,7 +296,7 @@ public class AllTests {
 
         CLIEngine.solve(7429, 8, 3);
         CLIEngine.solve(87463,30,30);
-
+        
     }
 
 }
