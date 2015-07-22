@@ -60,7 +60,7 @@ public class CLIEngine {
         BitSet solution;
         Solution factors;
 
-        String scoreTab = "__";
+        String scoreTab = "____";
 
         long gcd1,gcd2;
 
@@ -71,14 +71,14 @@ public class CLIEngine {
             System.out.println("Megoldandó kongruencia rendszer:");
             System.out.println();
 
-            System.out.print("    ");
+            System.out.print("  ");
             for(i=0;i< iLength;i++)
-                System.out.printf("%4d   ",QS.getInterval().get(i));
+                System.out.printf("%6d ", QS.getInterval().get(i));
             System.out.println();
             System.out.print(scoreTab);
             for(i=0;i< iLength;i++)
-                System.out.print(scoreTab + scoreTab+"___");
-            System.out.println(scoreTab + scoreTab +"_______");
+                System.out.print(scoreTab + "___");
+            System.out.println(scoreTab + "_____");
 
             for(i=0,y=QS.factorBase.size();i<y;i++){
                 System.out.printf("%2d| ",QS.factorBase.get(i));
@@ -149,7 +149,12 @@ public class CLIEngine {
                     System.out.print(row.get(i) ? 1 : 0);
                 System.out.println(']');
                 */
-                factors = QS.getFactors(row);
+                
+                try{
+                    factors = QS.getFactors(row);
+                }catch (ArithmeticException e){
+                    continue;
+                }
 
                 gcd1 = IntMath.binGcd(factors.x+factors.y,n);
                 if (gcd1 == 1 | gcd1 == n)
@@ -175,7 +180,7 @@ public class CLIEngine {
 
     public static Vector<BitSet> freeVar(int bits) {
         int size = 1 << bits;
-        Vector<BitSet> results = new Vector<BitSet>(size);
+        Vector<BitSet> results = new Vector<>(size);
         for (int val = 1; val < size; val++) {
             BitSet bs = new BitSet(bits);
             results.add(bs);

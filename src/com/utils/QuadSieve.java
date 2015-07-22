@@ -50,6 +50,8 @@ public class QuadSieve {
 
         Vector<Future<BitSet>> futureExponentMatrix = new Vector<Future<BitSet>>();
         BitMatrix exponentMatrix = new BitMatrix(this.length);
+        BitSet column;
+        
         BitMatrix smoothMatrix;
         BitSet sign = new BitSet(this.length);
         long l;
@@ -79,10 +81,15 @@ public class QuadSieve {
                 futureExponentMatrix.add( pool.submit(new Sifter(p)) );
             }
         }
-
-        for( Future<BitSet> column : futureExponentMatrix ){
+        i = 1;
+        for( Future<BitSet> fcolumn : futureExponentMatrix ){
             try {
-                exponentMatrix.add(column.get());
+                column = fcolumn.get();
+                if (column != null){
+                    exponentMatrix.add(column);
+                    i++;
+                }else
+                    factorBase.removeElementAt(i);
             } catch (ExecutionException e) {
                 // TODO: raise correct exception
                 e.printStackTrace();
@@ -171,13 +178,20 @@ public class QuadSieve {
 
         @Override
         public BitSet call() {
-            int i,p,e, fx;
+            int i,p,exp, fx;
+            int s1 = 0,s2;
+            int offset = from % step;
+            
+            try{
+                s1 = IntMath.tonelliShanks(n,step);
+            } catch (ArithmeticException e){
+                return null;
+            }
+            
+            s2 = step - s1;
 
-            int s1 = IntMath.tonelliShanks(n,step);
-            int s2 = step - s1;
-
-            s1 -= from % step;
-            s2 -= from % step;
+            s1 -= offset;
+            s2 -= offset;
             s1 += step;
             s2 += step;
             s1 %= step;
@@ -187,12 +201,12 @@ public class QuadSieve {
 
             for (i=0;i<length;i+=step){
                 p = step * step;
-                e = 1;
+                exp = 1;
                 if (i+s1 < length){
                     //System.out.println(from+i+" "+sievingInterval.get(i+s1));
                     fx = sievingInterval.get(i+s1);
                     while ( fx % p == 0 ) {
-                        e++;
+                        exp++;
                         p*=step;
                     }
                     p/=step;
@@ -200,15 +214,15 @@ public class QuadSieve {
                         fx = smoothCheck.get(i+s1);
                         smoothCheck.set(i+s1,fx/p);
                     }
-                    if ( (e & 1) == 1 )
+                    if ( (exp & 1) == 1 )
                         sieve.set(i+s1);
                 }
                 p = step * step;
-                e = 1;
+                exp = 1;
                 if (i+s2 < length && s1 != s2){
                     fx = sievingInterval.get(i+s2);
                     while ( fx % p == 0 ) {
-                        e++;
+                        exp++;
                         p*=step;
                     }
                     p/=step;
@@ -216,7 +230,7 @@ public class QuadSieve {
                         fx = smoothCheck.get(i+s2);
                         smoothCheck.set(i+s2,fx/p);
                     }
-                    if ( (e & 1) == 1 )
+                    if ( (exp & 1) == 1 )
                         sieve.set(i+s2);
                 }
 

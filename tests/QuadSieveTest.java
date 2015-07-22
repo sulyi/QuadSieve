@@ -1,5 +1,3 @@
-package tests;
-
 import com.CLIEngine;
 import com.binalg.BitMatrix;
 import com.binalg.SimpleBitMatrix;
@@ -25,7 +23,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
  */
 
 
-public class AllTests {
+public class QuadSieveTest {
 
     Integer[] primes = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
             31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
@@ -181,7 +179,7 @@ public class AllTests {
 
     }
 
-    //@Test
+    @Test
     public void LegendreTest() {
         log.info("started");
 
@@ -274,7 +272,7 @@ public class AllTests {
 
         for (BitSet row : A) {
             for (int i = 0, y = A.getNumCols(); i < y; i++)
-                System.out.print(((row.get(i)) ? 1 : 0) + "\t");
+                System.out.print(((row.get(i)) ? 1 : 0) + " ");
             System.out.println();
         }
         System.out.println();
@@ -282,7 +280,7 @@ public class AllTests {
         N = A.nullSpace();
         for (BitSet row : N) {
             for (int i = 0, y = N.getNumCols(); i < y; i++)
-                System.out.print(((row.get(i)) ? 1 : 0) + "\t");
+                System.out.print(((row.get(i)) ? 1 : 0) + " ");
             System.out.println();
         }
 
@@ -296,6 +294,7 @@ public class AllTests {
 
         CLIEngine.solve(7429, 8, 3);
         CLIEngine.solve(87463,30,30);
+        CLIEngine.solve(20000,200,100);
         
     }
 

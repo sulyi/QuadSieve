@@ -13,7 +13,7 @@ import java.util.concurrent.*;
  */
 
 public class EratoSieve {              
-    protected static Vector<Integer> primes = new Vector<Integer>();
+    protected static Vector<Integer> primes = new Vector<>();
 
     protected static BitSet sieve = new BitSet();
     protected static int from;
@@ -119,7 +119,7 @@ public class EratoSieve {
     }
 
     private static class Sifter implements Runnable{
-        private BlockingQueue<Strain> strains  = new LinkedBlockingQueue<Strain>();
+        private BlockingQueue<Strain> strains  = new LinkedBlockingQueue<>();
         private Semaphore latch;
 
 

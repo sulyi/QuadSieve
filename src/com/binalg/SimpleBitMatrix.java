@@ -19,18 +19,18 @@ public class SimpleBitMatrix implements Iterable<BitSet> {
 
     public SimpleBitMatrix(int numCols) {
         this.numCols = numCols;
-        rows = new Vector<BitSet>();
+        rows = new Vector<>();
     }
 
     public SimpleBitMatrix(BitSet[] rows, int numCols) {
         this.numCols = numCols;
-        this.rows = new Vector<BitSet>(rows.length);
+        this.rows = new Vector<>(rows.length);
         this.rows.addAll(Arrays.asList(rows));
     }
 
     public void transpose() {
         int y = rows.size();
-        Vector<BitSet> transposed = new Vector<BitSet>(numCols);
+        Vector<BitSet> transposed = new Vector<>(numCols);
         BitSet row;
         for (int i = 0; i < numCols; i++) {
             row = new BitSet(y);

@@ -46,7 +46,7 @@ public class BitMatrix extends SimpleBitMatrix {
 
         waitHere = new Semaphore(0);
         ExecutorService pool = Executors.newFixedThreadPool(threads);
-        addQueue = new ArrayBlockingQueue<AddRows>(threads);
+        addQueue = new ArrayBlockingQueue<>(threads);
 
         try {
             for (i = 0; i < threads; i++)
